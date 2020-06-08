@@ -57,12 +57,38 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        File file = new File(getFilesDir() , "subdirectorio");
+
+        if(file.exists()){
+            Log.d("infoAppArc","directorio existe");
+        }else{
+            file.mkdir();
+            Log.d("infoAppArc","directorio creado");
+        }
+
+
         //listarTrabajos();
+
+       /* String[] archivos = fileList();
+        for(String file: archivos){
+            Log.d("infoAppArc",file);
+            if(file.equals("listaTrabajosBytesLunes")){
+                deleteFile("listaTrabajosBytesLunes");
+                Log.d("infoAppArc","Borrado de archivo");
+            }
+        }
+
+        archivos = fileList();
+        for(String file: archivos){
+            Log.d("infoAppArc",file);
+        }*/
+
         //listarArchivos();
         //leerArchivoTexto();
         //leerArchivoBytes();
         //validarPermisos();
-
+/*
         TrabajoRepository trabajoRepository = new TrabajoRepository(getApplication());
         trabajoRepository.getListaTrabajos().observe(this, new Observer<List<Trabajo>>() {
             @Override
@@ -73,15 +99,15 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
-        trabajoRepository.listarTrabajos();
+        trabajoRepository.listarTrabajos();*/
 
     }
 
-    public void gestionSP(){
-        SharedPreferences sharedPreferences = getSharedPreferences("archivo1",MODE_PRIVATE);
+    public void gestionSP() {
+        SharedPreferences sharedPreferences = getSharedPreferences("archivo1", MODE_PRIVATE);
         SharedPreferences.Editor editor2 = sharedPreferences.edit();
 
-        editor2.putString("nombre","Cesar");
+        editor2.putString("nombre", "Cesar");
 
         editor2.apply();
 
@@ -89,7 +115,7 @@ public class MainActivity extends AppCompatActivity {
         SharedPreferences preferences = getPreferences(MODE_PRIVATE);
         SharedPreferences.Editor editor = preferences.edit();
 
-        editor.putString("dni","12345678");
+        editor.putString("dni", "12345678");
 
         editor.apply();
 
@@ -98,24 +124,24 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    public void leerSharedPref(){
-        SharedPreferences preferences = getSharedPreferences("archivo1",MODE_PRIVATE);
-        String dni = preferences.getString("nombre","no existe dni");
+    public void leerSharedPref() {
+        SharedPreferences preferences = getSharedPreferences("archivo1", MODE_PRIVATE);
+        String dni = preferences.getString("nombre", "no existe dni");
 
-        if(dni.equals("no existe dni")){
+        if (dni.equals("no existe dni")) {
             Log.d("infoApp", "No existe dni");
-        }else{
+        } else {
             Log.d("infoApp", "Si existe dni: " + dni);
         }
     }
 
-    public void leerPref(){
+    public void leerPref() {
         SharedPreferences preferences = getPreferences(MODE_PRIVATE);
-        String dni = preferences.getString("dni","no existe dni");
+        String dni = preferences.getString("dni", "no existe dni");
 
-        if(dni.equals("no existe dni")){
+        if (dni.equals("no existe dni")) {
             Log.d("infoApp", "No existe dni");
-        }else{
+        } else {
             Log.d("infoApp", "Si existe dni: " + dni);
         }
     }
@@ -198,13 +224,19 @@ public class MainActivity extends AppCompatActivity {
 
     public void validarPermisos() {
         int permission = ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
+
         if (permission == PackageManager.PERMISSION_GRANTED) {
             Log.d("infoApp", "tenemos permisos");
             //descargarImagenDownloadManager();
             descargarImagenConVolley();
         } else {
             Log.d("infoApp", "No tenemos permisos");
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+
+            String[] arregloPermisos = {Manifest.permission.WRITE_EXTERNAL_STORAGE};
+
+            ActivityCompat.requestPermissions(
+                    this,
+                    arregloPermisos,
                     codigoPermisoWriteReadSD);
         }
     }
@@ -222,7 +254,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void guardarComoTextoSD(Trabajo[] arregloTrabajo) {
-
 
         if (existeMemoriaSdReadWrite()) {
 
@@ -267,25 +298,59 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    public void leerArchivoTextoSubcarpeta() {
+
+        String fileName = "listaTrabajosJson";
+
+        File subdir = new File(getFilesDir(),"subdirectorio");
+        File archivo = new File(subdir,fileName);
+
+
+        try (FileInputStream fileInputStream = new FileInputStream(archivo);
+
+             FileReader fileReader = new FileReader(fileInputStream.getFD());) {
+            Gson gson = new Gson();
+
+            try (BufferedReader bufferedReader = new BufferedReader(fileReader);) {
+
+
+                String line = bufferedReader.readLine();
+
+                Trabajo[] arregloTrabajo = gson.fromJson(line, Trabajo[].class);
+
+                // guardarComoTextoSD(arregloTrabajo);
+
+                for (Trabajo t : arregloTrabajo) {
+                    Log.d("infoApp", t.getJobTitle());
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+
     public void leerArchivoTexto() {
         String fileName = "listaTrabajosJson";
 
         try (FileInputStream fileInputStream = openFileInput(fileName);
-             FileReader fileReader = new FileReader(fileInputStream.getFD());
-             BufferedReader bufferedReader = new BufferedReader(fileReader);) {
 
+             FileReader fileReader = new FileReader(fileInputStream.getFD());) {
             Gson gson = new Gson();
 
-            String line = bufferedReader.readLine();
+            try (BufferedReader bufferedReader = new BufferedReader(fileReader);) {
 
-            Trabajo[] arregloTrabajo = gson.fromJson(line, Trabajo[].class);
 
-            guardarComoTextoSD(arregloTrabajo);
+                String line = bufferedReader.readLine();
 
-           /* for(Trabajo t: arregloTrabajo){
-                Log.d("infoApp",t.getJobTitle());
-            }*/
+                Trabajo[] arregloTrabajo = gson.fromJson(line, Trabajo[].class);
 
+                // guardarComoTextoSD(arregloTrabajo);
+
+                for (Trabajo t : arregloTrabajo) {
+                    Log.d("infoApp", t.getJobTitle());
+                }
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -301,11 +366,14 @@ public class MainActivity extends AppCompatActivity {
 
     public void guardarComoBytes(Trabajo[] arregloTrabajo) {
 
-        String fileName = "listaTrabajosBytes";
+        String fileName = "listaTrabajosBytesLunes";
 
         try (FileOutputStream fileOutputStream = openFileOutput(fileName, Context.MODE_PRIVATE);
+
              ObjectOutputStream objectOutputStream = new ObjectOutputStream(fileOutputStream)) {
+
             objectOutputStream.writeObject(arregloTrabajo);
+
             Log.d("infoApp", "Guardado exitoso");
         } catch (IOException e) {
             Log.d("infoApp", "Error al guardar");
@@ -318,10 +386,34 @@ public class MainActivity extends AppCompatActivity {
         String fileName = "listaTrabajosJson";
 
         try (FileOutputStream fileOutputStream = openFileOutput(fileName, Context.MODE_PRIVATE);
+
              FileWriter fileWriter = new FileWriter(fileOutputStream.getFD());) {
+
             Gson gson = new Gson();
             String listaComoJson = gson.toJson(arregloTrabajo);
             fileWriter.write(listaComoJson);
+
+            Log.d("infoApp", "Guardado exitoso");
+        } catch (IOException e) {
+            Log.d("infoApp", "Error al guardar");
+            e.printStackTrace();
+        }
+
+
+    }
+
+    public void guardarComoTextoSubDir(Trabajo[] arregloTrabajo) {
+
+        String fileName = "listaTrabajosJson";
+
+        try (FileOutputStream fileOutputStream = openFileOutput(fileName, Context.MODE_PRIVATE);
+
+             FileWriter fileWriter = new FileWriter(fileOutputStream.getFD());) {
+
+            Gson gson = new Gson();
+            String listaComoJson = gson.toJson(arregloTrabajo);
+            fileWriter.write(listaComoJson);
+
             Log.d("infoApp", "Guardado exitoso");
         } catch (IOException e) {
             Log.d("infoApp", "Error al guardar");
@@ -342,16 +434,17 @@ public class MainActivity extends AppCompatActivity {
                         Gson gson = new Gson();
                         TrabajoDto dto = gson.fromJson(response, TrabajoDto.class);
                         Trabajo[] arregloTrabajo = dto.getTrabajos();
-                        TrabajoRepository trabajoRepository = new TrabajoRepository(MainActivity.this.getApplication());
-                        for(Trabajo t: arregloTrabajo){
-                            trabajoRepository.guardarTrabajo(t);
+                        //TrabajoRepository trabajoRepository = new TrabajoRepository(MainActivity.this.getApplication());
+                        for (Trabajo t : arregloTrabajo) {
+                            //trabajoRepository.guardarTrabajo(t);
+                            Log.d("infoApp", t.getJobTitle());
                         }
 
-                        trabajoRepository.listarTrabajos();
+                        // trabajoRepository.listarTrabajos();
 
 
                         //guardarComoTexto(arregloTrabajo);
-                        //guardarComoBytes(arregloTrabajo);
+                        guardarComoBytes(arregloTrabajo);
                     }
                 },
                 new Response.ErrorListener() {
